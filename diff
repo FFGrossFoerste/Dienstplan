@@ -1,0 +1,1690 @@
+index.html
+<!doctype html>
+<html lang="de">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dienstplan</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.1/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100%;
+      height: 100%;
+    }
+    
+    html {
+      height: 100%;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px 12px;
+    }
+    
+    @media (min-width: 768px) {
+      .container {
+        padding: 32px 24px;
+      }
+    }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      margin-bottom: 16px;
+    }
+    
+    @media (min-width: 768px) {
+      .card {
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+      }
+    }
+    
+    h1 {
+      margin: 0 0 20px 0;
+      font-size: 24px;
+      color: #1a202c;
+      font-weight: 700;
+    }
+    
+    @media (min-width: 768px) {
+      h1 {
+        margin: 0 0 24px 0;
+        font-size: 28px;
+      }
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4a5568;
+    }
+    
+    input[type="date"],
+    input[type="time"],
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.2s;
+      background: white;
+      min-height: 48px;
+    }
+    
+    @media (min-width: 768px) {
+      input[type="date"],
+      input[type="time"],
+      input[type="text"],
+      input[type="number"],
+      select {
+        padding: 12px;
+        font-size: 15px;
+        min-height: auto;
+      }
+    }
+    
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      min-height: 48px;
+    }
+    
+    @media (min-width: 768px) {
+      .btn {
+        padding: 14px;
+      }
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      background: #5a67d8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      background: #48bb78;
+      color: white;
+    }
+    
+    .btn-secondary:hover:not(:disabled) {
+      background: #38a169;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .entry-card {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s;
+      border-left: 4px solid;
+    }
+    
+    @media (min-width: 768px) {
+      .entry-card {
+        padding: 12px 16px;
+      }
+      
+      .entry-card:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      }
+    }
+    
+    .entry-content {
+      flex: 1;
+      cursor: pointer;
+    }
+    
+    .entry-topic {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .entry-subtitle {
+      font-size: 13px;
+      color: #a0aec0;
+      margin-bottom: 4px;
+      font-style: italic;
+    }
+    
+    .entry-datetime {
+      font-size: 14px;
+      color: #718096;
+    }
+    
+    .entry-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-direction: row;
+      flex-shrink: 0;
+    }
+    
+    .calendar-link {
+      padding: 6px 10px;
+      background: #edf2f7;
+      color: #4a5568;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+    
+    .calendar-link:hover {
+      background: #e2e8f0;
+      color: #2d3748;
+    }
+    
+    .edit-btn {
+      padding: 6px 10px;
+      background: #4299e1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .edit-btn:hover {
+      background: #3182ce;
+    }
+    
+    .delete-btn {
+      padding: 6px 10px;
+      background: #fc8181;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .delete-btn:hover {
+      background: #f56565;
+    }
+    
+    .color-red { border-left-color: #f56565; }
+    .color-blue { border-left-color: #4299e1; }
+    .color-green { border-left-color: #48bb78; }
+    .color-yellow { border-left-color: #ecc94b; }
+    .color-purple { border-left-color: #9f7aea; }
+    .color-orange { border-left-color: #ff8c42; }
+    .color-darkgray { border-left-color: #4a5568; }
+    .color-pink { border-left-color: #ed64a6; }
+    .color-turquoise { border-left-color: #38b2ac; }
+    
+    .topic-red { color: #f56565; }
+    .topic-blue { color: #4299e1; }
+    .topic-green { color: #48bb78; }
+    .topic-yellow { color: #d69e2e; }
+    .topic-purple { color: #9f7aea; }
+    .topic-orange { color: #ff8c42; }
+    .topic-darkgray { color: #4a5568; }
+    .topic-pink { color: #ed64a6; }
+    .topic-turquoise { color: #38b2ac; }
+    
+    .month-divider {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 16px;
+      margin: 16px 0 12px 0;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .year-divider {
+      background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+      color: white;
+      padding: 16px 20px;
+      margin: 24px 0 16px 0;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 18px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(245, 101, 101, 0.3);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #a0aec0;
+    }
+    
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      opacity: 0.5;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      background: #2d3748;
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.3s ease-out;
+      z-index: 1000;
+      text-align: center;
+    }
+    
+    @media (min-width: 768px) {
+      .toast {
+        left: auto;
+        right: 24px;
+        bottom: 24px;
+        padding: 16px 24px;
+        max-width: 400px;
+      }
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+      animation: fadeIn 0.2s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90%;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .modal-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #1a202c;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .btn-cancel {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+    
+    .btn-cancel:hover {
+      background: #cbd5e0;
+    }
+    
+    .show-past-toggle {
+      background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+      color: white;
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .show-past-toggle:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .past-entries-hidden {
+      opacity: 0.6;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="container">
+   <div class="card">
+    <h1 id="app-title">Dienstplan</h1>
+    <form id="entry-form">
+     <div class="form-group"><label for="date" id="date-label">Datum</label> <input type="date" id="date" name="date" required>
+     </div>
+     <div class="form-group"><label for="time" id="time-label">Uhrzeit</label> <input type="time" id="time" name="time" required>
+     </div>
+     <div class="form-group"><label for="topic" id="topic-label">Thema</label> <input type="text" id="topic" name="topic" placeholder="z.B. Teambesprechung" required>
+     </div>
+     <div class="form-group"><label for="subtitle" id="subtitle-label">Ort oder Hinweis</label> <input type="text" id="subtitle" name="subtitle" placeholder="z.B. Konferenzraum A">
+     </div>
+     <div class="form-group"><label for="color" id="color-label">Farbe wählen</label> <select id="color" name="color" required> <option value="">Bitte wählen...</option> <option value="red">Aktive</option> <option value="blue">Blau</option> <option value="green">Gruppe 2</option> <option value="yellow">Veranstaltungen</option> <option value="purple">Atemschutz</option> <option value="orange">JF</option> <option value="darkgray">Sonstiges</option> <option value="pink">Alterskameraden</option> <option value="turquoise">KF</option> </select>
+     </div>
+     <div class="form-group"><label> <input type="checkbox" id="recurring" name="recurring" style="width: auto; margin-right: 8px;"> <span id="recurring-label">Serientermin erstellen</span> </label>
+     </div>
+     <div id="recurring-options" style="display: none; padding: 16px; background: #f7fafc; border-radius: 8px; margin-bottom: 16px;">
+      <div class="form-group"><label for="recurring-day" id="recurring-day-label">Wochentag</label> <select id="recurring-day" name="recurring-day"> <option value="1">Montag</option> <option value="2">Dienstag</option> <option value="3">Mittwoch</option> <option value="4">Donnerstag</option> <option value="5">Freitag</option> <option value="6">Samstag</option> <option value="0">Sonntag</option> </select>
+      </div>
+      <div class="form-group"><label for="recurring-week" id="recurring-week-label">Welche Woche(n) im Monat</label>
+       <div style="display: flex; gap: 8px; flex-wrap: wrap;"><label style="display: flex; align-items: center; gap: 4px; font-weight: normal;"> <input type="checkbox" class="week-checkbox" value="1" style="width: auto;"> 1. Woche </label> <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;"> <input type="checkbox" class="week-checkbox" value="2" style="width: auto;"> 2. Woche </label> <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;"> <input type="checkbox" class="week-checkbox" value="3" style="width: auto;"> 3. Woche </label> <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;"> <input type="checkbox" class="week-checkbox" value="4" style="width: auto;"> 4. Woche </label> <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;"> <input type="checkbox" class="week-checkbox" value="5" style="width: auto;"> 5. Woche </label>
+       </div>
+      </div>
+      <div class="form-group"><label for="recurring-months" id="recurring-months-label">Anzahl Monate</label> <input type="number" id="recurring-months" name="recurring-months" min="1" max="24" value="12" style="width: 100px;">
+      </div>
+     </div><button type="submit" class="btn btn-primary" id="add-btn"> <span id="add-button-text">Eintragen</span> </button>
+    </form>
+   </div>
+   <div class="card" id="filter-card">
+    <h2 style="font-size: 18px; font-weight: 600; margin: 0 0 16px 0; color: #1a202c;">Filter</h2>
+    <div id="color-filters" style="display: flex; flex-wrap: wrap; gap: 12px;"><label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;"> <input type="checkbox" class="color-filter" value="red" checked style="width: auto;"> <span style="width: 20px; height: 20px; background: #f56565; border-radius: 4px; display: inline-block;"></span> <span id="legend-red">Aktive</span> </label> <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;"> <input type="checkbox" class="color-filter" value="blue" checked style="width: auto;"> <span style="width: 20px; height: 20px; background: #4299e1; border-radius: 4px; display: inline-block;"></span> <span id="legend-blue">Blau</span> </label> <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;"> <input type="checkbox" class="color-filter" value="green" checked style="width: auto;"> <span style="width: 20px; height: 20px; background: #48bb78; border-radius: 4px; display: inline-block;"></span> <span id="legend-green">Gruppe 2</span> </label> <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;"> <input type="checkbox" class="color-filter" value="yellow" checked style="width: auto;"> <span style="width: 20px; height: 20px; background: #ecc94b; border-radius: 4px; display: inline-block;"></span> <span id="legend-yellow">Veranstaltungen</span> </label> <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;"> <input type="checkbox" class="color-filter" value="purple" checked style="width: auto;"> <span style="width: 20px; height: 20px; background: #9f7aea; border-radius: 4px; display: inline-block;"></span> <span id="legend-purple">Atemschutz</span> </label> <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;"> <input type="checkbox" class="color-filter" value="orange" checked style="width: auto;"> <span style="width: 20px; height: 20px; background: #ff8c42; border-radius: 4px; display: inline-block;"></span> <span id="legend-orange">JF</span> </label> <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;"> <input type="checkbox" class="color-filter" value="darkgray" checked style="width: auto;"> <span style="width: 20px; height: 20px; background: #4a5568; border-radius: 4px; display: inline-block;"></span> <span id="legend-darkgray">Sonstiges</span> </label> <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;"> <input type="checkbox" class="color-filter" value="pink" checked style="width: auto;"> <span style="width: 20px; height: 20px; background: #ed64a6; border-radius: 4px; display: inline-block;"></span> <span id="legend-pink">Alterskameraden</span> </label> <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer;"> <input type="checkbox" class="color-filter" value="turquoise" checked style="width: auto;"> <span style="width: 20px; height: 20px; background: #38b2ac; border-radius: 4px; display: inline-block;"></span> <span id="legend-turquoise">KF</span> </label>
+    </div>
+   </div>
+   <div class="card">
+    <h2 style="font-size: 18px; font-weight: 600; margin: 0 0 16px 0; color: #1a202c;" id="pdf-settings-label">PDF-Einstellungen</h2>
+    <div class="form-group"><label for="pdf-custom-title" id="pdf-title-label">Titel für PDF (z.B. Jugendfeuerwehr)</label> <input type="text" id="pdf-custom-title" placeholder="z.B. Jugendfeuerwehr, Gesamtwehr, Gruppe 1">
+    </div>
+   </div>
+   <div id="entries-container"></div>
+   <div id="pdf-button-container"></div>
+  </div>
+  <script>
+    const defaultConfig = {
+      app_title: "Dienstplan",
+      add_button_text: "Eintragen",
+      pdf_button_text: "PDF erstellen",
+      pdf_settings_label: "PDF-Einstellungen",
+      pdf_title_label: "Titel für PDF (z.B. Jugendfeuerwehr)",
+      date_label: "Datum",
+      time_label: "Uhrzeit",
+      topic_label: "Thema",
+      subtitle_label: "Ort oder Hinweis",
+      recurring_label: "Serientermin erstellen",
+      recurring_day_label: "Wochentag",
+      recurring_week_label: "Welche Woche(n) im Monat",
+      recurring_months_label: "Anzahl Monate",
+      color_label: "Farbe wählen",
+      legend_red: "Aktive",
+      legend_blue: "Blau",
+      legend_green: "Gruppe 2",
+      legend_yellow: "Veranstaltungen",
+      legend_purple: "Atemschutz",
+      legend_orange: "JF",
+      legend_darkgray: "Sonstiges",
+      legend_pink: "Alterskameraden",
+      legend_turquoise: "KF",
+      primary_color: "#667eea",
+      secondary_color: "#48bb78",
+      text_color: "#1a202c",
+      background_color: "#764ba2",
+      surface_color: "#ffffff",
+      font_family: "Inter",
+      font_size: 16
+    };
+    
+    let currentEntries = [];
+    let isLoading = false;
+    let activeFilters = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'darkgray', 'pink', 'turquoise'];
+    let showPastEntries = false;
+    
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+    
+    function showEditModal(entry) {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      
+      overlay.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">Termin bearbeiten</div>
+          
+          <form id="edit-form">
+            <div class="form-group">
+              <label for="edit-date">Datum</label>
+              <input type="date" id="edit-date" name="date" value="${entry.date}" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-time">Uhrzeit</label>
+              <input type="time" id="edit-time" name="time" value="${entry.time}" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-topic">Thema</label>
+              <input type="text" id="edit-topic" name="topic" value="${entry.topic}" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-subtitle">Ort oder Hinweis</label>
+              <input type="text" id="edit-subtitle" name="subtitle" value="${entry.subtitle || ''}">
+            </div>
+            
+            <div class="form-group">
+              <label for="edit-color">Farbe wählen</label>
+              <select id="edit-color" name="color" required>
+                <option value="red" ${entry.color === 'red' ? 'selected' : ''}>Aktive</option>
+                <option value="blue" ${entry.color === 'blue' ? 'selected' : ''}>Blau</option>
+                <option value="green" ${entry.color === 'green' ? 'selected' : ''}>Gruppe 2</option>
+                <option value="yellow" ${entry.color === 'yellow' ? 'selected' : ''}>Veranstaltungen</option>
+                <option value="purple" ${entry.color === 'purple' ? 'selected' : ''}>Atemschutz</option>
+                <option value="orange" ${entry.color === 'orange' ? 'selected' : ''}>JF</option>
+                <option value="darkgray" ${entry.color === 'darkgray' ? 'selected' : ''}>Sonstiges</option>
+                <option value="pink" ${entry.color === 'pink' ? 'selected' : ''}>Alterskameraden</option>
+                <option value="turquoise" ${entry.color === 'turquoise' ? 'selected' : ''}>KF</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="edit-series" style="width: auto; margin-right: 8px;">
+                <span>Alle Termine dieser Serie ändern</span>
+              </label>
+              <div style="font-size: 12px; color: #718096; margin-top: 4px;">
+                Wenn aktiviert, werden alle Termine mit dem ursprünglichen Thema und Untertitel aktualisiert
+              </div>
+            </div>
+            
+            <div class="modal-actions">
+              <button type="button" class="btn btn-cancel" id="cancel-edit">Abbrechen</button>
+              <button type="submit" class="btn btn-primary" id="confirm-edit">
+                <span>Speichern</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+      
+      document.body.appendChild(overlay);
+      
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.remove();
+        }
+      });
+      
+      document.getElementById('cancel-edit').addEventListener('click', () => {
+        overlay.remove();
+      });
+      
+      document.getElementById('edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const editSeries = document.getElementById('edit-series').checked;
+        const saveBtn = document.getElementById('confirm-edit');
+        
+        setLoadingState(saveBtn, true);
+        
+        if (editSeries) {
+          const seriesToUpdate = currentEntries.filter(e => 
+            e.topic === entry.topic && 
+            e.subtitle === entry.subtitle
+          );
+          
+          let successCount = 0;
+          for (const seriesEntry of seriesToUpdate) {
+            const updatedEntry = {
+              ...seriesEntry,
+              topic: formData.get('topic'),
+              subtitle: formData.get('subtitle'),
+              color: formData.get('color')
+            };
+            
+            if (seriesEntry.__backendId === entry.__backendId) {
+              updatedEntry.date = formData.get('date');
+              updatedEntry.time = formData.get('time');
+            }
+            
+            const result = await window.dataSdk.update(updatedEntry);
+            if (result.isOk) {
+              successCount++;
+            }
+          }
+          
+          showToast(`${successCount} Termine aktualisiert`);
+        } else {
+          const updatedEntry = {
+            ...entry,
+            date: formData.get('date'),
+            time: formData.get('time'),
+            topic: formData.get('topic'),
+            subtitle: formData.get('subtitle'),
+            color: formData.get('color')
+          };
+          
+          const result = await window.dataSdk.update(updatedEntry);
+          
+          if (result.isOk) {
+            showToast('Termin aktualisiert');
+          } else {
+            showToast('Fehler beim Speichern');
+          }
+        }
+        
+        overlay.remove();
+      });
+    }
+    
+    function showDeleteConfirmModal(entry) {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      
+      overlay.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">Termin löschen?</div>
+          <div style="margin-bottom: 20px; color: #4a5568;">
+            <strong>${entry.topic}</strong><br>
+            ${entry.subtitle ? `${entry.subtitle}<br>` : ''}
+            ${formatDate(entry.date)} — ${entry.time} Uhr
+          </div>
+          
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="delete-series" style="width: auto; margin-right: 8px;">
+              <span>Alle Termine dieser Serie löschen</span>
+            </label>
+            <div style="font-size: 12px; color: #718096; margin-top: 4px;">
+              Wenn aktiviert, werden alle Termine mit dem gleichen Thema und Untertitel gelöscht
+            </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" class="btn btn-cancel" id="cancel-delete">Abbrechen</button>
+            <button type="button" class="btn" id="confirm-delete" style="background: #fc8181; color: white;">
+              <span>Löschen</span>
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(overlay);
+      
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.remove();
+        }
+      });
+      
+      document.getElementById('cancel-delete').addEventListener('click', () => {
+        overlay.remove();
+      });
+      
+      document.getElementById('confirm-delete').addEventListener('click', async () => {
+        const deleteSeries = document.getElementById('delete-series').checked;
+        const deleteBtn = document.getElementById('confirm-delete');
+        
+        setLoadingState(deleteBtn, true);
+        
+        if (deleteSeries) {
+          const seriesToDelete = currentEntries.filter(e => 
+            e.topic === entry.topic && 
+            e.subtitle === entry.subtitle
+          );
+          
+          let successCount = 0;
+          for (const seriesEntry of seriesToDelete) {
+            const result = await window.dataSdk.delete(seriesEntry);
+            if (result.isOk) {
+              successCount++;
+            }
+          }
+          
+          showToast(`${successCount} Termine gelöscht`);
+        } else {
+          const result = await window.dataSdk.delete(entry);
+          
+          if (result.isOk) {
+            showToast('Termin gelöscht');
+          } else {
+            showToast('Fehler beim Löschen');
+          }
+        }
+        
+        overlay.remove();
+      });
+    }
+    
+    function showPDFOptionsModal() {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const nextYear = currentYear + 1;
+      
+      const filteredEntries = getFilteredEntries();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startOfCurrentYear = new Date(currentYear, 0, 1);
+      
+      const hasPastEntriesThisYear = filteredEntries.some(entry => {
+        const entryDate = new Date(entry.date + 'T00:00:00');
+        return entryDate >= startOfCurrentYear && entryDate < startOfToday;
+      });
+      
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      
+      const pastEntriesOption = hasPastEntriesThisYear ? `
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="include-past" checked style="width: auto; margin-right: 8px;">
+            <span>Vergangene Termine aus ${currentYear} einschließen</span>
+          </label>
+        </div>
+      ` : '';
+      
+      overlay.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">PDF-Einstellungen</div>
+          
+          <div class="form-group">
+            <label for="pdf-year">Für welches Jahr?</label>
+            <select id="pdf-year" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 15px;">
+              <option value="${currentYear}">${currentYear} (Aktuelles Jahr)</option>
+              <option value="${nextYear}">${nextYear} (Kommendes Jahr)</option>
+            </select>
+          </div>
+          
+          ${pastEntriesOption}
+          
+          <div style="font-size: 14px; color: #718096; padding: 12px; background: #f7fafc; border-radius: 8px; margin-top: 16px;">
+            ℹ️ Das PDF enthält nur die aktuell gefilterten Termine (${filteredEntries.length} Termine)
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" class="btn btn-cancel" id="cancel-pdf">Abbrechen</button>
+            <button type="button" class="btn btn-secondary" id="confirm-pdf">
+              <span>PDF erstellen</span>
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(overlay);
+      
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.remove();
+        }
+      });
+      
+      document.getElementById('cancel-pdf').addEventListener('click', () => {
+        overlay.remove();
+      });
+      
+      document.getElementById('confirm-pdf').addEventListener('click', () => {
+        const selectedYear = parseInt(document.getElementById('pdf-year').value);
+        const includePastCheckbox = document.getElementById('include-past');
+        const includePast = includePastCheckbox ? includePastCheckbox.checked : false;
+        
+        overlay.remove();
+        generatePDF(selectedYear, includePast);
+      });
+    }
+    
+    function getNthWeekdayOfMonth(year, month, dayOfWeek, n) {
+      // Erstelle das Datum für den 1. des Monats
+      const firstDayOfMonth = new Date(year, month, 1);
+      const firstDayWeekday = firstDayOfMonth.getDay();
+      
+      // Berechne den Abstand vom 1. des Monats zum ersten gewünschten Wochentag
+      let daysUntilFirstOccurrence = (dayOfWeek - firstDayWeekday + 7) % 7;
+      
+      // Wenn der 1. des Monats bereits der gesuchte Wochentag ist, ist der Abstand 0
+      if (daysUntilFirstOccurrence === 0 && firstDayWeekday === dayOfWeek) {
+        daysUntilFirstOccurrence = 0;
+      }
+      
+      // Der erste Wochentag des Typs im Monat (1-basiert)
+      const firstOccurrenceDay = 1 + daysUntilFirstOccurrence;
+      
+      // Berechne das n-te Vorkommen (1-basiert: 1. Montag, 2. Montag, etc.)
+      const targetDay = firstOccurrenceDay + (n - 1) * 7;
+      
+      // Erstelle das Zieldatum
+      const targetDate = new Date(year, month, targetDay);
+      
+      // Prüfe, ob dieses Datum noch im aktuellen Monat liegt
+      if (targetDate.getMonth() !== month) {
+        return null; // Der n-te Wochentag existiert nicht in diesem Monat
+      }
+      
+      return targetDate;
+    }
+    
+    function setLoadingState(button, loading) {
+      if (loading) {
+        button.disabled = true;
+        const text = button.querySelector('span');
+        const originalText = text.textContent;
+        text.dataset.originalText = originalText;
+        text.innerHTML = '<span class="spinner"></span>';
+      } else {
+        button.disabled = false;
+        const text = button.querySelector('span');
+        text.textContent = text.dataset.originalText || text.textContent;
+      }
+    }
+    
+    function createCalendarLink(entry) {
+      const start = `${entry.date.replace(/-/g, '')}T${entry.time.replace(':', '')}00`;
+      
+      const colorMap = {
+        'red': '11',
+        'blue': '9',
+        'green': '10',
+        'yellow': '5',
+        'purple': '3',
+        'orange': '6',
+        'darkgray': '8',
+        'pink': '4',
+        'turquoise': '7'
+      };
+      
+      const colorId = colorMap[entry.color] || '9';
+      const description = entry.subtitle ? encodeURIComponent(entry.subtitle) : '';
+      
+      return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(entry.topic)}&dates=${start}/${start}&details=${description}&color=${colorId}`;
+    }
+    
+    function getFilteredEntries() {
+      return currentEntries.filter(entry => activeFilters.includes(entry.color));
+    }
+    
+    function renderEntries() {
+      const container = document.getElementById('entries-container');
+      const pdfContainer = document.getElementById('pdf-button-container');
+      
+      const filteredEntries = getFilteredEntries();
+      
+      if (currentEntries.length === 0) {
+        container.innerHTML = `
+          <div class="card empty-state">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <p>Noch keine Einträge vorhanden</p>
+          </div>
+        `;
+        pdfContainer.innerHTML = '';
+        return;
+      }
+      
+      if (filteredEntries.length === 0) {
+        container.innerHTML = `
+          <div class="card empty-state">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+            </svg>
+            <p>Keine Einträge für die ausgewählten Filter</p>
+          </div>
+        `;
+        pdfContainer.innerHTML = '';
+        return;
+      }
+      
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      const futureEntries = filteredEntries.filter(entry => {
+        const entryDate = new Date(entry.date + 'T00:00:00');
+        return entryDate >= startOfToday;
+      });
+      
+      const pastEntries = filteredEntries.filter(entry => {
+        const entryDate = new Date(entry.date + 'T00:00:00');
+        return entryDate < startOfToday;
+      });
+      
+      const sortedEntries = [...futureEntries].sort((a, b) => {
+        if (a.date === b.date) {
+          return a.time.localeCompare(b.time);
+        }
+        return a.date.localeCompare(b.date);
+      });
+      
+      let html = '';
+      let lastMonth = null;
+      let lastYear = null;
+      
+      sortedEntries.forEach(entry => {
+        const entryDate = new Date(entry.date + 'T00:00:00');
+        const entryYear = entryDate.getFullYear();
+        const entryMonth = entryDate.getMonth();
+        const monthKey = `${entryYear}-${entryMonth}`;
+        
+        if (lastYear !== null && lastYear !== entryYear) {
+          html += `<div class="year-divider">📅 ${entryYear}</div>`;
+        } else if (lastMonth !== monthKey) {
+          const monthName = entryDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+          html += `<div class="month-divider">${monthName}</div>`;
+        }
+        
+        lastMonth = monthKey;
+        lastYear = entryYear;
+        
+        html += `
+          <div class="entry-card color-${entry.color}" data-entry-id="${entry.__backendId}">
+            <div class="entry-content">
+              <div class="entry-topic topic-${entry.color}">${entry.topic}</div>
+              ${entry.subtitle ? `<div class="entry-subtitle">${entry.subtitle}</div>` : ''}
+              <div class="entry-datetime">${formatDate(entry.date)} — ${entry.time} Uhr</div>
+            </div>
+            <div class="entry-actions">
+              <a href="${createCalendarLink(entry)}" target="_blank" rel="noopener noreferrer" class="calendar-link">
+                Kalender
+              </a>
+              <button class="edit-btn" data-id="${entry.__backendId}">✏️</button>
+              <button class="delete-btn" data-id="${entry.__backendId}">Löschen</button>
+            </div>
+          </div>
+        `;
+      });
+      
+      if (pastEntries.length > 0) {
+        html += `
+          <div class="show-past-toggle ${showPastEntries ? '' : 'past-entries-hidden'}" id="past-toggle">
+            <span>${showPastEntries ? '▼' : '▶'}</span>
+            <span>Vergangene Termine (${pastEntries.length})</span>
+          </div>
+        `;
+        
+        if (showPastEntries) {
+          const sortedPastEntries = [...pastEntries].sort((a, b) => {
+            if (a.date === b.date) {
+              return a.time.localeCompare(b.time);
+            }
+            return b.date.localeCompare(a.date);
+          });
+          
+          let pastLastMonth = null;
+          let pastLastYear = null;
+          
+          sortedPastEntries.forEach(entry => {
+            const entryDate = new Date(entry.date + 'T00:00:00');
+            const entryYear = entryDate.getFullYear();
+            const entryMonth = entryDate.getMonth();
+            const monthKey = `${entryYear}-${entryMonth}`;
+            
+            if (pastLastYear !== null && pastLastYear !== entryYear) {
+              html += `<div class="year-divider">📅 ${entryYear}</div>`;
+            } else if (pastLastMonth !== monthKey) {
+              const monthName = entryDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+              html += `<div class="month-divider">${monthName}</div>`;
+            }
+            
+            pastLastMonth = monthKey;
+            pastLastYear = entryYear;
+            
+            html += `
+              <div class="entry-card color-${entry.color}" data-entry-id="${entry.__backendId}">
+                <div class="entry-content">
+                  <div class="entry-topic topic-${entry.color}">${entry.topic}</div>
+                  ${entry.subtitle ? `<div class="entry-subtitle">${entry.subtitle}</div>` : ''}
+                  <div class="entry-datetime">${formatDate(entry.date)} — ${entry.time} Uhr</div>
+                </div>
+                <div class="entry-actions">
+                  <a href="${createCalendarLink(entry)}" target="_blank" rel="noopener noreferrer" class="calendar-link">
+                    Kalender
+                  </a>
+                  <button class="edit-btn" data-id="${entry.__backendId}">✏️</button>
+                  <button class="delete-btn" data-id="${entry.__backendId}">Löschen</button>
+                </div>
+              </div>
+            `;
+          });
+        }
+      }
+      
+      container.innerHTML = html;
+      
+      const pastToggle = document.getElementById('past-toggle');
+      if (pastToggle) {
+        pastToggle.addEventListener('click', () => {
+          showPastEntries = !showPastEntries;
+          renderEntries();
+        });
+      }
+      
+      document.querySelectorAll('.entry-content').forEach(content => {
+        content.addEventListener('click', (e) => {
+          const card = content.closest('.entry-card');
+          const id = card.dataset.entryId;
+          const entry = currentEntries.find(e => e.__backendId === id);
+          if (entry) {
+            showDeleteConfirmModal(entry);
+          }
+        });
+      });
+      
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = e.target.dataset.id;
+          const entry = currentEntries.find(e => e.__backendId === id);
+          if (entry) {
+            showEditModal(entry);
+          }
+        });
+      });
+      
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = e.target.dataset.id;
+          const entry = currentEntries.find(e => e.__backendId === id);
+          if (entry) {
+            showDeleteConfirmModal(entry);
+          }
+        });
+      });
+      
+      const config = window.elementSdk?.config || defaultConfig;
+      pdfContainer.innerHTML = `
+        <button class="btn btn-secondary" id="pdf-btn">
+          <span id="pdf-button-text">${config.pdf_button_text}</span>
+        </button>
+        <button class="btn btn-primary" id="calendar-all-btn">
+          <span>📅 Alle in Kalender exportieren</span>
+        </button>
+      `;
+      
+      document.getElementById('pdf-btn').addEventListener('click', showPDFOptionsModal);
+      document.getElementById('calendar-all-btn').addEventListener('click', addAllToCalendar);
+    }
+    
+    function formatDate(dateString) {
+      const date = new Date(dateString + 'T00:00:00');
+      return date.toLocaleDateString('de-DE', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+    }
+    
+    function drawFireDeptLogo(pdf, x, y, size) {
+      const centerX = x + size / 2;
+      const centerY = y + size / 2;
+      const radius = size / 2;
+      
+      pdf.setDrawColor(0);
+      pdf.setLineWidth(0.8);
+      pdf.circle(centerX, centerY, radius, 'S');
+      
+      pdf.circle(centerX, centerY, radius * 0.7, 'S');
+      
+      pdf.setLineWidth(1.2);
+      pdf.line(centerX, centerY - radius * 0.5, centerX, centerY + radius * 0.5);
+      pdf.line(centerX - radius * 0.5, centerY, centerX + radius * 0.5, centerY);
+      
+      pdf.setFontSize(6);
+      pdf.setFont(undefined, 'bold');
+      
+      pdf.text('BERGEN', centerX, centerY - radius * 0.25, { align: 'center' });
+      
+      pdf.text('RETTEN', centerX + radius * 0.35, centerY + 1.5, { align: 'center', angle: 90 });
+      
+      pdf.text('LÖSCHEN', centerX, centerY + radius * 0.35, { align: 'center' });
+      
+      pdf.text('SCHÜTZEN', centerX - radius * 0.35, centerY + 1.5, { align: 'center', angle: 270 });
+    }
+    
+    function drawGiesenwappen(pdf, x, y, size) {
+      const centerX = x + size / 2;
+      const centerY = y + size / 2;
+      
+      pdf.setDrawColor(0);
+      pdf.setLineWidth(0.8);
+      
+      pdf.roundedRect(x + 2, y, size - 4, size * 0.8, 2, 2, 'S');
+      
+      pdf.line(x + 2, y + size * 0.8, centerX, y + size);
+      pdf.line(centerX, y + size, x + size - 2, y + size * 0.8);
+      
+      pdf.setLineWidth(0.5);
+      pdf.line(x + 3, centerY - 2, x + size - 3, centerY - 2);
+      
+      const symbolY = y + size * 0.25;
+      const spacing = (size - 6) / 4;
+      pdf.circle(x + spacing + 3, symbolY, 1.5, 'S');
+      pdf.circle(centerX, symbolY, 1.5, 'S');
+      pdf.circle(x + size - spacing - 3, symbolY, 1.5, 'S');
+      
+      pdf.setLineWidth(1);
+      pdf.line(centerX, centerY + 2, centerX, centerY + 8);
+      pdf.circle(centerX, centerY + 1, 3, 'S');
+      
+      pdf.setFontSize(5);
+      pdf.setFont(undefined, 'normal');
+      pdf.text('Groß Förste', centerX, y + size + 3, { align: 'center' });
+    }
+    
+    async function generatePDF(selectedYear, includePast) {
+      const btn = document.getElementById('pdf-btn');
+      setLoadingState(btn, true);
+      
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        let filteredEntries = getFilteredEntries().filter(entry => {
+          const entryDate = new Date(entry.date + 'T00:00:00');
+          const entryYear = entryDate.getFullYear();
+          
+          if (entryYear !== selectedYear) {
+            return false;
+          }
+          
+          if (selectedYear === currentYear && !includePast && entryDate < startOfToday) {
+            return false;
+          }
+          
+          return true;
+        });
+        
+        const sortedEntries = filteredEntries.sort((a, b) => {
+          if (a.date === b.date) {
+            return a.time.localeCompare(b.time);
+          }
+          return a.date.localeCompare(b.date);
+        });
+        
+        if (sortedEntries.length === 0) {
+          showToast('Keine Termine für das ausgewählte Jahr gefunden');
+          setLoadingState(btn, false);
+          return;
+        }
+        
+        const displayYear = selectedYear;
+        
+        drawFireDeptLogo(pdf, 15, 10, 20);
+        
+        drawGiesenwappen(pdf, 175, 10, 20);
+        
+        pdf.setFontSize(14);
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(`Jahresdienstplan ${displayYear}`, 105, 18, { align: 'center' });
+        
+        const customTitle = document.getElementById('pdf-custom-title').value.trim();
+        if (customTitle) {
+          pdf.setFontSize(12);
+          pdf.setFont(undefined, 'normal');
+          pdf.text(customTitle, 105, 24, { align: 'center' });
+        }
+        
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(15, customTitle ? 28 : 22, 195, customTitle ? 28 : 22);
+        
+        const config = window.elementSdk?.config || defaultConfig;
+        const colorMapping = {
+          'red': { rgb: [245, 101, 101], label: config.legend_red },
+          'blue': { rgb: [66, 153, 225], label: config.legend_blue },
+          'green': { rgb: [72, 187, 120], label: config.legend_green },
+          'yellow': { rgb: [236, 201, 75], label: config.legend_yellow },
+          'purple': { rgb: [159, 122, 234], label: config.legend_purple },
+          'orange': { rgb: [255, 140, 66], label: config.legend_orange },
+          'darkgray': { rgb: [74, 85, 104], label: config.legend_darkgray },
+          'pink': { rgb: [237, 100, 166], label: config.legend_pink },
+          'turquoise': { rgb: [56, 178, 172], label: config.legend_turquoise }
+        };
+        
+        let startY = customTitle ? 36 : 30;
+        pdf.setFontSize(11);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Legende:', 15, startY);
+        pdf.setFont(undefined, 'normal');
+        pdf.setFontSize(10);
+        
+        let legendX = 40;
+        const usedColors = [...new Set(sortedEntries.map(e => e.color))];
+        usedColors.forEach((color, idx) => {
+          if (colorMapping[color]) {
+            const colorData = colorMapping[color];
+            pdf.setFillColor(...colorData.rgb);
+            pdf.rect(legendX, startY - 4, 4, 4, 'F');
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(colorData.label, legendX + 6, startY);
+            legendX += pdf.getTextWidth(colorData.label) + 15;
+          }
+        });
+        
+        pdf.setFont(undefined, 'normal');
+        pdf.setFontSize(11);
+        pdf.setTextColor(0, 0, 0);
+        let yPos = startY + 10;
+        
+        const lineHeight = 7;
+        
+        sortedEntries.forEach((entry, idx) => {
+          if (yPos > 265) {
+            pdf.addPage();
+            yPos = 20;
+          }
+          
+          if (colorMapping[entry.color]) {
+            const colorData = colorMapping[entry.color];
+            const fadedR = colorData.rgb[0] + (255 - colorData.rgb[0]) * 0.7;
+            const fadedG = colorData.rgb[1] + (255 - colorData.rgb[1]) * 0.7;
+            const fadedB = colorData.rgb[2] + (255 - colorData.rgb[2]) * 0.7;
+            
+            pdf.setFillColor(fadedR, fadedG, fadedB);
+            pdf.rect(15, yPos - 5, 180, lineHeight, 'F');
+          }
+          
+          pdf.setTextColor(0, 0, 0);
+          const text = `${formatDate(entry.date)} - ${entry.topic} - ${entry.time} Uhr`;
+          pdf.text(text, 18, yPos);
+          
+          yPos += lineHeight;
+        });
+        
+        if (yPos > 250) {
+          pdf.addPage();
+          yPos = 20;
+        }
+        
+        yPos += 10;
+        const currentDate = new Date().toLocaleDateString('de-DE', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        });
+        
+        pdf.setFontSize(10);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Alle Termine unter Vorbehalt. Erstellt am: ${currentDate}`, 15, yPos);
+        
+        const pdfBlob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `dienstplan-${displayYear}.pdf`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        link.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 100);
+        
+        showToast('PDF wird heruntergeladen...');
+        
+      } catch (error) {
+        console.error('PDF Error:', error);
+        showToast('Fehler beim Erstellen des PDFs');
+      } finally {
+        setLoadingState(btn, false);
+      }
+    }
+    
+    function addAllToCalendar() {
+      const filteredEntries = getFilteredEntries();
+      const sortedEntries = [...filteredEntries].sort((a, b) => {
+        if (a.date === b.date) {
+          return a.time.localeCompare(b.time);
+        }
+        return a.date.localeCompare(b.date);
+      });
+      
+      sortedEntries.forEach((entry, index) => {
+        setTimeout(() => {
+          const calendarUrl = createCalendarLink(entry);
+          window.open(calendarUrl, '_blank', 'noopener,noreferrer');
+        }, index * 500);
+      });
+      
+      showToast(`${sortedEntries.length} Kalender-Tabs werden geöffnet`);
+    }
+    
+    const dataHandler = {
+      onDataChanged(data) {
+        currentEntries = data;
+        renderEntries();
+      }
+    };
+    
+    async function init() {
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          showToast('Fehler beim Laden der Daten');
+        }
+      }
+      
+      document.querySelectorAll('.color-filter').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+          const color = e.target.value;
+          if (e.target.checked) {
+            if (!activeFilters.includes(color)) {
+              activeFilters.push(color);
+            }
+          } else {
+            activeFilters = activeFilters.filter(c => c !== color);
+          }
+          renderEntries();
+        });
+      });
+      
+      const recurringCheckbox = document.getElementById('recurring');
+      const recurringOptions = document.getElementById('recurring-options');
+      
+      recurringCheckbox.addEventListener('change', (e) => {
+        recurringOptions.style.display = e.target.checked ? 'block' : 'none';
+      });
+      
+      const form = document.getElementById('entry-form');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const isRecurring = document.getElementById('recurring').checked;
+        
+        if (isRecurring) {
+          const selectedWeeks = Array.from(document.querySelectorAll('.week-checkbox:checked')).map(cb => parseInt(cb.value));
+          
+          if (selectedWeeks.length === 0) {
+            showToast('Bitte wählen Sie mindestens eine Woche aus');
+            return;
+          }
+          
+          const startDate = new Date(formData.get('date') + 'T00:00:00');
+          const dayOfWeek = parseInt(document.getElementById('recurring-day').value);
+          const monthsCount = parseInt(document.getElementById('recurring-months').value);
+          const time = formData.get('time');
+          const topic = formData.get('topic');
+          const subtitle = formData.get('subtitle') || '';
+          const color = formData.get('color');
+          
+          const entriesToCreate = [];
+          
+          for (let monthOffset = 0; monthOffset < monthsCount; monthOffset++) {
+            const targetYear = startDate.getFullYear();
+            const targetMonth = startDate.getMonth() + monthOffset;
+            const actualYear = targetYear + Math.floor(targetMonth / 12);
+            const actualMonth = targetMonth % 12;
+            
+            selectedWeeks.forEach(weekNumber => {
+              const date = getNthWeekdayOfMonth(actualYear, actualMonth, dayOfWeek, weekNumber);
+              
+              if (date) {
+                const dateString = date.toISOString().split('T')[0];
+                entriesToCreate.push({
+                  id: `${Date.now()}-${Math.random()}-${monthOffset}-${weekNumber}`,
+                  date: dateString,
+                  time: time,
+                  topic: topic,
+                  subtitle: subtitle,
+                  color: color,
+                  createdAt: new Date().toISOString()
+                });
+              }
+            });
+          }
+          
+          if (currentEntries.length + entriesToCreate.length > 999) {
+            showToast(`Zu viele Einträge! Dies würde ${entriesToCreate.length} Einträge erstellen. Maximum: 999 Einträge insgesamt.`);
+            return;
+          }
+          
+          const addBtn = document.getElementById('add-btn');
+          setLoadingState(addBtn, true);
+          
+          let successCount = 0;
+          for (const entry of entriesToCreate) {
+            if (window.dataSdk) {
+              const result = await window.dataSdk.create(entry);
+              if (result.isOk) {
+                successCount++;
+              }
+            }
+          }
+          
+          form.reset();
+          document.getElementById('recurring').checked = false;
+          recurringOptions.style.display = 'none';
+          showToast(`${successCount} Serientermine erstellt`);
+          setLoadingState(addBtn, false);
+          
+        } else {
+          if (currentEntries.length >= 999) {
+            showToast('Maximale Anzahl von 999 Einträgen erreicht. Bitte löschen Sie einige Einträge.');
+            return;
+          }
+          
+          const entry = {
+            id: Date.now().toString(),
+            date: formData.get('date'),
+            time: formData.get('time'),
+            topic: formData.get('topic'),
+            subtitle: formData.get('subtitle') || '',
+            color: formData.get('color'),
+            createdAt: new Date().toISOString()
+          };
+          
+          const addBtn = document.getElementById('add-btn');
+          setLoadingState(addBtn, true);
+          
+          if (window.dataSdk) {
+            const result = await window.dataSdk.create(entry);
+            if (result.isOk) {
+              form.reset();
+              showToast('Eintrag hinzugefügt');
+            } else {
+              showToast('Fehler beim Speichern');
+            }
+            setLoadingState(addBtn, false);
+          }
+        }
+      });
+      
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            const baseSize = config.font_size;
+            const customFont = config.font_family;
+            const baseFontStack = '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif';
+            
+            document.getElementById('app-title').textContent = config.app_title;
+            document.getElementById('add-button-text').textContent = config.add_button_text;
+            document.getElementById('pdf-settings-label').textContent = config.pdf_settings_label;
+            document.getElementById('pdf-title-label').textContent = config.pdf_title_label;
+            document.getElementById('date-label').textContent = config.date_label;
+            document.getElementById('time-label').textContent = config.time_label;
+            document.getElementById('topic-label').textContent = config.topic_label;
+            document.getElementById('subtitle-label').textContent = config.subtitle_label;
+            document.getElementById('recurring-label').textContent = config.recurring_label;
+            document.getElementById('recurring-day-label').textContent = config.recurring_day_label;
+            document.getElementById('recurring-week-label').textContent = config.recurring_week_label;
+            document.getElementById('recurring-months-label').textContent = config.recurring_months_label;
+            document.getElementById('color-label').textContent = config.color_label;
+            document.getElementById('legend-red').textContent = config.legend_red;
+            document.getElementById('legend-blue').textContent = config.legend_blue;
+            document.getElementById('legend-green').textContent = config.legend_green;
+            document.getElementById('legend-yellow').textContent = config.legend_yellow;
+            document.getElementById('legend-purple').textContent = config.legend_purple;
+            document.getElementById('legend-orange').textContent = config.legend_orange;
+            document.getElementById('legend-darkgray').textContent = config.legend_darkgray;
+            document.getElementById('legend-pink').textContent = config.legend_pink;
+            document.getElementById('legend-turquoise').textContent = config.legend_turquoise;
+            
+            const pdfText = document.getElementById('pdf-button-text');
+            if (pdfText) {
+              pdfText.textContent = config.pdf_button_text;
+            }
+            
+            document.body.style.background = `linear-gradient(135deg, ${config.primary_color} 0%, ${config.background_color} 100%)`;
+            document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+            document.body.style.fontSize = `${baseSize}px`;
+            document.body.style.color = config.text_color;
+            
+            document.querySelectorAll('.card').forEach(card => {
+              card.style.background = config.surface_color;
+            });
+            
+            document.querySelectorAll('.btn-primary').forEach(btn => {
+              btn.style.background = config.primary_color;
+            });
+            
+            document.querySelectorAll('.btn-secondary').forEach(btn => {
+              btn.style.background = config.secondary_color;
+            });
+            
+            document.querySelector('h1').style.fontSize = `${baseSize * 1.75}px`;
+            document.querySelector('h1').style.color = config.text_color;
+            
+            document.querySelectorAll('label').forEach(label => {
+              label.style.fontSize = `${baseSize * 0.875}px`;
+            });
+            
+            document.querySelectorAll('input, select').forEach(input => {
+              input.style.fontSize = `${baseSize * 0.9375}px`;
+            });
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [
+              {
+                get: () => config.background_color || defaultConfig.background_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.background_color = value;
+                    window.elementSdk.setConfig({ background_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.surface_color || defaultConfig.surface_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.surface_color = value;
+                    window.elementSdk.setConfig({ surface_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.text_color || defaultConfig.text_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.text_color = value;
+                    window.elementSdk.setConfig({ text_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.primary_color || defaultConfig.primary_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.primary_color = value;
+                    window.elementSdk.setConfig({ primary_color: value });
+                  }
+                }
+              },
+              {
+                get: () => config.secondary_color || defaultConfig.secondary_color,
+                set: (value) => {
+                  if (window.elementSdk) {
+                    window.elementSdk.config.secondary_color = value;
+                    window.elementSdk.setConfig({ secondary_color: value });
+                  }
+                }
+              }
+            ],
+            borderables: [],
+            fontEditable: {
+              get: () => config.font_family || defaultConfig.font_family,
+              set: (value) => {
+                if (window.elementSdk) {
+                  window.elementSdk.config.font_family = value;
+                  window.elementSdk.setConfig({ font_family: value });
+                }
+              }
+            },
+            fontSizeable: {
+              get: () => config.font_size || defaultConfig.font_size,
+              set: (value) => {
+                if (window.elementSdk) {
+                  window.elementSdk.config.font_size = value;
+                  window.elementSdk.setConfig({ font_size: value });
+                }
+              }
+            }
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ["app_title", config.app_title || defaultConfig.app_title],
+            ["add_button_text", config.add_button_text || defaultConfig.add_button_text],
+            ["pdf_button_text", config.pdf_button_text || defaultConfig.pdf_button_text],
+            ["pdf_settings_label", config.pdf_settings_label || defaultConfig.pdf_settings_label],
+            ["pdf_title_label", config.pdf_title_label || defaultConfig.pdf_title_label],
+            ["date_label", config.date_label || defaultConfig.date_label],
+            ["time_label", config.time_label || defaultConfig.time_label],
+            ["topic_label", config.topic_label || defaultConfig.topic_label],
+            ["subtitle_label", config.subtitle_label || defaultConfig.subtitle_label],
+            ["recurring_label", config.recurring_label || defaultConfig.recurring_label],
+            ["recurring_day_label", config.recurring_day_label || defaultConfig.recurring_day_label],
+            ["recurring_week_label", config.recurring_week_label || defaultConfig.recurring_week_label],
+            ["recurring_months_label", config.recurring_months_label || defaultConfig.recurring_months_label],
+            ["color_label", config.color_label || defaultConfig.color_label],
+            ["legend_red", config.legend_red || defaultConfig.legend_red],
+            ["legend_blue", config.legend_blue || defaultConfig.legend_blue],
+            ["legend_green", config.legend_green || defaultConfig.legend_green],
+            ["legend_yellow", config.legend_yellow || defaultConfig.legend_yellow],
+            ["legend_purple", config.legend_purple || defaultConfig.legend_purple],
+            ["legend_orange", config.legend_orange || defaultConfig.legend_orange],
+            ["legend_darkgray", config.legend_darkgray || defaultConfig.legend_darkgray],
+            ["legend_pink", config.legend_pink || defaultConfig.legend_pink],
+            ["legend_turquoise", config.legend_turquoise || defaultConfig.legend_turquoise]
+          ])
+        });
+      }
+    }
+    
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9af776f93017ca75',t:'MTc2NTk4NTQ1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
